@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= title %></title>
+    <link rel="stylesheet" type="text/css" href="/stylesheets/bootstrap.min.css"/>
+    <script src = '/javascripts/jquery.js'></script>
+    <script src="/javascripts/vue.js" type="text/javascript" charset="utf-8"></script>
+    <script src="/javascripts/bootstrap.js" type="text/javascript" charset="utf-8"></script>
+    <script src="/javascripts/vue-resurce.js" type="text/javascript" charset="utf-8"></script>
+    <style>
+    	*{
+    		margin: 0;padding: 0;border: 0;
+    	}
+    	.slide{
+    		width: 100%;
+    	}
+    	.slideshow{
+    		width: 100%;position: relative;
+    		overflow: hidden;
+    	}
+    	.slideshow img{
+    		position: absolute;
+    	}
+    	.bar{
+			width: 30vh;height: 5vh;margin:0 auto;margin-top:-50px; 
+    	}
+    	.bar div{
+    		position: relative;
+    		display: inline-block;width: 30px;height: 10px;
+    		border: 1px solid;margin-right:10px; 
+    	}
+    	.active{
+    		background-color: green;
+    	}
+    	.fade-enter-active,.fade-leave-active{
+    		transition: opacity 2.5s;
+    	}
+    	.fade-leave-active,.fade-enter{
+    		opacity: 0;
+    	}
+    	.grey{
+    		background-color: gray;
+    	}
+    </style>
+  </head>
+  <body>
+    <div id="topbanner" class="slide">
+    	<div class="slideshow" id="pic" @mouseup.prevent="move_up($event)" @mousedown.prevent="move_dwon($event)">
+    			<transition v-for="(dtd,index) in bannerList" name="fade" model="in-out" :key="index">
+                    <img :src="dtd.url"  v-show="index == myindex" :alt="dtd.title" >
+                </transition>
+    	</div>
+    	<div class="bar">
+    		<div v-for="(item,index) in bannerList" :key="index" @click='goto(index)' :class='myindex==index ? "active" : ""'></div>
+    	</div>
+    </div>
+    <div class="slideshow" style="margin-top: 3px">
+			<div id="box1" class="container">
+				<input type="text" v-model="msg" style="margin-top: 50px;" placeholder="请输入想要搜索的内容" @keyup="_get($event)" @keydown.down="changedown" @keydown.up.prevent="changeup" class="form-control"/>
+				<ul class="list-unstyled">
+					<li v-for="(dat,index) in my_ul" :class="{grey : index==show_index}">{{dat}}</li>
+				</ul>
+				<p v-show="my_ul.length==0">暂无数据！！！</p>
+			</div>
+			<div id="box2">
+				<div v-for="i in 4" :id="'mybox'+i">
+				</div>
+			</div>
+    </div>
+    <div class="slideshow" id="star">
+        <canvas ref="canvas">您的浏览器不支持canvas</canvas>
+    </div>
+    <script>$(document).ready(function(){
+    	var _height = document.documentElement.clientHeight;
+    	var _width = document.documentElement.clientWidth;
+    	$('.slideshow').css({'height':_height})
+    	var obj = new Vue({
+    		el : '#topbanner',
+    		data :{
+    			bannerList : [{
+    					url :'/images/1.jpg',
+    					href :"",
+    					title : "logo"
+    				},{
+    					url:'/images/2.png',
+    					href :"",
+    					title : ""
+    				},{
+    					url: '/images/3.jpg',
+    					href : "",
+    					title : ""
+    				},{
+    					url : '/images/4.jpg',
+    					href :"",
+    					title : "",
+    					inved : "",
+    				}],
+    			myindex : 0,//当前页数
+    			inv : 5000,//播放间隔
+    			inved : "",
+    			oldX : 0,
+    			newX : 0,
+    			oldY : 0,
+    			newY : 0,
+    		},
+    		methods : {
+    			run : function(){
+    				that = this;
+    				this.inved = setInterval(function(){
+    					that.goto(that.nextIndex());
+    				}, this.inv);
+    			},
+    			goto : function(index){
+    				this.myindex = index;
+    			},
+    			nextIndex : function(){
+    				if(this.myindex == this.bannerList.length-1){
+    					return 0;
+    				}else {
+    					return this.myindex+1
+    				}
+    			},
+    			perIndex: function(){
+    				if(this.myindex == 0){
+    					return this.bannerList.length-1;
+    				}else {
+    					return this.myindex-1
+    				}
+    			},
+    			move_dwon : function(eve){
+    				this.oldX = eve.screenX;
+    			},
+    			con_move : function(){
+    				window.removeEventListener('scroll',this.con);
+						let that = this;
+    				$('body,html').stop().animate({
+							"scrollTop" : that.oldY
+						});
+						$('body,html').animate({
+							"scrollTop" : that.oldY,
+						},function() {
+							window.addEventListener('scroll',that.con);
+						});
+    			},
+    			con : function(){//滚动上下切换屏幕
+    				this.newY = document.documentElement.scrollTop || window.pageYOffset || document.body.scrollTop;
+    				if(this.newY > this.oldY+20){//下
+    					this.oldY += _height;
+    					this.con_move();
+    				}else if (this.newY < this.oldY-20) {//上
+    					this.oldY -= _height;
+    					this.con_move();
+    				}
+    			},
+    			move_up : function(eve){//左右滑动图片切换
+    				this.newX = eve.screenX;
+    				if(this.newX > this.oldX+50){
+    					this.inved = clearInterval(this.inved);
+    					this.goto(this.perIndex())
+    					this.run();
+    				}else if(this.newX < this.oldX-50){
+    					this.inved = clearInterval(this.inved);
+    					this.goto(this.nextIndex())
+    					this.run();
+    				}
+    			}
+    		},
+    		mounted(){
+    			window.addEventListener('scroll',this.con);
+    		}	
+    	});
+    	obj.run();
+    	new Vue({
+    		el : '#box1',
+    		data : {
+    			msg : '',//需要搜索的数据
+    			my_ul : '',//数据表
+    			show_index : -1,//重点显示的图
+    			url : 'https://sp0.baidu.com/5a1Fazu8AA54nxGko9WTAnF6hhy/su'
+    		},
+    		methods : {
+    				_get : function(eve){
+    					if(eve.keyCode == 38|| eve.keyCode == 40){}
+    					else{
+    						this.$http.jsonp(this.url,{
+		    				params : {
+		    						wd : this.msg
+		    				},
+		    					jsonp : 'cb'
+		    				}).then(function(res){
+		    					this.my_ul = res.data.s
+		    				},function(res){
+		    					console.log(res.status)
+		    				})
+    					}
+    				},
+		    		changedown : function(){//向上翻页
+		    			this.show_index +=1;
+		    			if(this.show_index == this.my_ul.length)this.show_index = -1;
+		    			this.msg = this.my_ul[this.show_index];
+		    		},
+		    		changeup : function(){//向下翻页
+		    			this.show_index -=1;
+		    			if(this.show_index == -2)this.show_index = this.my_ul.length - 1;
+		    			this.msg = this.my_ul[this.show_index];
+		    		}
+    		}
+    	});
+    	new Vue({
+    		el : '#box2',
+    		data : {
+    			
+    		},
+    		methods : {
+    			
+    		}
+    	});
+    	new Vue({
+				el : '#star',
+				data(){
+					return {
+						point : 113,//点的个数默认25个
+						roundColor : 'rgb(255,255,2,1)',//点的颜色
+						docWidth : 0,//画布宽
+						docHeight : 0,//画布高
+						context : null,//canvasDom执行的上下文
+						circleArr : [],//圆点数组
+						timer : null,//定时器对象
+						speed : 2,//速度
+					}
+				},
+				mounted(){
+					//const 声明不能被改变的常量
+					const canvasDom = this.$refs.canvas;
+					
+					this.docWidth = _width;
+					this.docHeight = _height;
+					
+					canvasDom.width = _width;
+	      	canvasDom.height = _height;
+	  			//初始化canvas上下文
+	  			this.context = canvasDom.getContext('2d');
+	  			
+	  			this.context.fillStyle = this.roundColor;
+	  			
+	  			this.createCircleArr();       // 设置星星数组
+	  			this.draw(); // 首屏绘制
+	  			this.cycleDraw(); // 循环绘制
+				},
+				methods: {
+		      /**
+		       * 生成min和max之间随机数
+		       */
+			      rangeRadom(max, min) {
+			        return Math.floor(Math.random() * (max - min + 1) + min)
+			      },
+		      /**
+		       * 绘制原点
+		       */
+			      drawCircle(context, x, y, r, moveX, moveY) {
+			        let circle = {
+			          x,
+			          y,
+			          r,
+			          moveX,
+			          moveY,
+			        }
+			        context.beginPath()
+			        //画曲线，x,y,圆点坐标，,r半径，开始弧度，结束弧度
+			        context.arc(circle.x, circle.y, circle.r, 0, 2 * Math.PI)
+			        context.closePath()
+			        context.fill()
+			        return circle
+			      },
+		      /**
+		       * 生成圆点数组
+		       */
+			      createCircleArr() {
+			        for (let i = 0; i < this.point; i++) {
+			          this.circleArr.push(this.drawCircle(
+			            this.context,
+			            this.rangeRadom(this.docWidth, 0),
+			            this.rangeRadom(this.docHeight, 0),
+			            this.rangeRadom(2, 1),
+			            this.rangeRadom(10, -10)/40,
+			            this.rangeRadom(10, -10)/40
+			          ))
+			        }
+			      },
+		      /**
+		       * 第一次绘制
+		       */
+			      draw() {
+			        const circleArr = this.circleArr;
+			        let img = new Image();
+			        img.src = '/images/5.jpg';
+			        
+			        this.context.clearRect(0, 0, this.docWidth, this.docHeight);
+			        this.context.drawImage(img,0,0);
+			        for (let i = 0; i < this.point; i++) {
+			          this.drawCircle(this.context, circleArr[i].x, circleArr[i].y, circleArr[i].r)
+			        }
+			      },
+    	      /**
+    	       * 循环绘制
+    	       */
+    			      cycleDraw() {
+    			        this.timer = setInterval(() => {
+    			          for(let i = 0; i < this.point; i++) {
+    			            let cir = this.circleArr[i]
+    			            cir.x += cir.moveX
+    			            cir.y += cir.moveY
+    			            if (cir.x > this.docWidth) {
+    			              cir.x = 0
+    			            } else if (cir.x < 0) {
+    			              cir.x = this.docWidth
+    			            }
+    			            if (cir.y > this.docHeight) {
+    			              cir.y = 0
+    			            } else if (cir.y < 0) {
+    			              cir.y = this.docHeight
+    			            }
+    			          }
+    			          this.draw()
+    			        }, 10)
+    			      },
+			    },
+			  	beforeDestory() {
+		      	// 记得摧毁定时器
+		      	clearInterval(this.timer)
+		   		}
+		});
+    });
+    </script>
+  </body>
+</html>

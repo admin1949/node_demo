@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= title %></title>
+    <link rel="stylesheet" type="text/css" href="/stylesheets/bootstrap.min.css"/>
+    <script src = '/javascripts/jquery.js'></script>
+    <script src="/javascripts/vue.js" type="text/javascript" charset="utf-8"></script>
+    <script src="/javascripts/bootstrap.js" type="text/javascript" charset="utf-8"></script>
+    <style>
+        .carousel-trans-toright-enter-active,.carousel-trans-toright-old-leave-active{
+          transition:all 0.5s;
+        }
+        .carousel-trans-toright-enter{
+          transform:translateX(940px); //新图片从右侧940px进入
+        }
+        .carousel-trans-toright-old-leave-active{
+          transform:translateX(-940px);  //老图片向左侧940px出去
+        }
+        .carousel-trans-toleft-enter-active,.carousel-trans-toleft-old-leave-active{
+          transition:all 0.5s;
+        }
+        .carousel-trans-toleft-enter{
+          transform:translateX(-940px); //新图片从右侧940px进入
+        }
+        .carousel-trans-toleft-old-leave-active{
+          transform:translateX(940px);  //老图片向左侧940px出去
+        }
+
+    </style>
+  </head>
+  <body>
+    <template>
+        <div class="carousel" >
+            <div class="imgBox">
+                <a :href="pics[currentIndex].href">
+                    <transition :name="'carousel-trans-'+direction+'-old'">
+                        <img v-if='!isShow' :src="pics[currentIndex].src" alt="">
+                    </transition>
+                    <transition :name="'carousel-trans-'+direction">
+                        <img v-if="isShow" :src="pics[currentIndex].src" alt="">
+                    </transition>
+                </a>
+            </div>
+            <h2>{{pics[currentIndex].title}}</h2>
+            <ul class="pagination">
+                <li v-for="(item,index) in pics">{{index+1}}</li>
+            </ul>
+        </div>
+    </template> 
+    <script>
+    	export default{
+            props : {
+                pics : {
+                    type : Array,
+                    default : [],
+                },
+                timeDelta : {
+                    type : Number,
+                    default : 2000,
+                }
+            },
+            data (){
+                return {
+                    currentIndex : 0,
+                    isShow : true,
+                    direction : 'toleft'
+                }
+            },
+            computed : {
+                prevIndex(){
+                    this.direction = 'toleft',
+                    if(this.currentIndex <= 0){
+                        return this.pics.length - 1
+                    }
+                    return this.currentIndex - 1
+                }
+            },
+            nextIndex(){
+              this.direction = 'toright'
+              if (this.currentIndex >= this.pics.length - 1) {
+                return 0
+              }
+              return this.currentIndex + 1
+          },
+          methods:{
+            goto(index){
+              this.isShow = false
+              setTimeout(()=>{
+                this.isShow = true
+                this.currentIndex = index
+              },10)
+              
+            },
+            runInterval(){
+              this.direction = 'toright'
+              this.timer = setInterval(()=>{
+                this.goto(this.nextIndex)
+              },this.timeDelta)
+            },
+            clearInv(){
+              clearInterval(this.timer)
+                }
+            },
+              mounted(){
+                this.runInterval()
+            }
+        }
+    </script>
+  </body>
+</html>
