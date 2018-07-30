@@ -41,6 +41,15 @@
     	.grey{
     		background-color: gray;
     	}
+        .link{
+            display: inline-block;width: 16rem;height: 6rem;text-align: center;line-height: 6rem;background-color: #d4d8e2;color: green;
+            margin-right: 2em;
+        }
+        a:hover{
+            color: white;
+            background-color: olivedrab;
+            text-decoration: none;
+        }
     </style>
   </head>
   <body>
@@ -55,16 +64,15 @@
     	</div>
     </div>
     <div class="slideshow" style="margin-top: 3px">
-			<div id="box1" class="container">
+			<div id="box1" class="container" style="height: 300px">
 				<input type="text" v-model="msg" style="margin-top: 50px;" placeholder="请输入想要搜索的内容" @keyup="_get($event)" @keydown.down="changedown" @keydown.up.prevent="changeup" class="form-control"/>
 				<ul class="list-unstyled">
 					<li v-for="(dat,index) in my_ul" :class="{grey : index==show_index}">{{dat}}</li>
 				</ul>
 				<p v-show="my_ul.length==0">暂无数据！！！</p>
 			</div>
-			<div id="box2">
-				<div v-for="i in 4" :id="'mybox'+i">
-				</div>
+			<div id="box2" class="container" style="margin-top: 3em">
+                <a v-for="(i,index) in url" :href="i" class="link img-rounded">{{i}}</a>
 			</div>
     </div>
     <div class="slideshow" id="star">
@@ -130,28 +138,35 @@
     			move_dwon : function(eve){
     				this.oldX = eve.screenX;
     			},
-    			con_move : function(){
+    			con_move : function(){//具体操作
     				window.removeEventListener('scroll',this.con);
-						let that = this;
-    				$('body,html').stop().animate({
-							"scrollTop" : that.oldY
-						});
-						$('body,html').animate({
-							"scrollTop" : that.oldY,
-						},function() {
-							window.addEventListener('scroll',that.con);
-						});
+    				window.addEventListener('scroll',this.con_remove)
+                    let that = this;
+    				if(! $('body,html').is(':animated')){//判断该对象是否处于动画状态
+                        console.log('解除');
+                        $('body,html').animate({
+                            "scrollTop" : that.oldY,
+                        },function() {//回调函数
+                            window.removeEventListener('scroll',that.con_remove);
+                            window.addEventListener('scroll',that.con);
+                        });
+                    }
+
     			},
-    			con : function(){//滚动上下切换屏幕
+    			con : function(eve){//滚动上下切换屏幕
     				this.newY = document.documentElement.scrollTop || window.pageYOffset || document.body.scrollTop;
-    				if(this.newY > this.oldY+20){//下
-    					this.oldY += _height;
-    					this.con_move();
-    				}else if (this.newY < this.oldY-20) {//上
-    					this.oldY -= _height;
-    					this.con_move();
-    				}
+                    let that = this;
+                    if(this.newY > this.oldY+20){//下
+                        this.oldY += _height;
+                        this.con_move();
+                    }else if(this.newY < this.oldY-20){
+                        this.oldY -= _height;
+                        this.con_move();
+                    }
     			},
+                con_remove : function(eve) {
+                      eve.returnValue = false;//false表示不执行方法
+                },
     			move_up : function(eve){//左右滑动图片切换
     				this.newX = eve.screenX;
     				if(this.newX > this.oldX+50){
@@ -163,13 +178,14 @@
     					this.goto(this.nextIndex())
     					this.run();
     				}
-    			}
+    			},
     		},
     		mounted(){
     			window.addEventListener('scroll',this.con);
+                this.run();
     		}	
     	});
-    	obj.run();
+
     	new Vue({
     		el : '#box1',
     		data : {
@@ -209,10 +225,10 @@
     	new Vue({
     		el : '#box2',
     		data : {
-    			
+                url : ['logo','myweb']
     		},
     		methods : {
-    			
+
     		}
     	});
     	new Vue({
